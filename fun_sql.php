@@ -123,6 +123,9 @@ class db{
 		};
 		return $condiciones_s;
 	}
+	private function innerJoin(){
+		echo "Hola desde el inner Join";
+	}
 	private function query($caso, $query){
 		switch ($caso) {
 			case 'select':
@@ -212,7 +215,12 @@ class db{
 		if (is_array($data["field"])) {
 			$data["field"] = $this->comar(1,$data["field"]);
 		};
-		if (is_array($data["tables"])) {
+		if($data["tables"]){
+			$this->innerJoin();
+		} else {
+			return;
+		};
+		/*if (is_array($data["tables"])) {
 			switch (true) {
 				case (is_array($data["tables"][0])):
 					$data["tables"] = " FROM ".$data["tables"][0][0]." ".$data["tables"][1]." JOIN (".str_replace($data["tables"][0][0].", ","",$this->comar(1,$data["tables"][0])).") ";
@@ -223,7 +231,7 @@ class db{
 			};
 		} else {
 			$data["tables"] = " FROM ".$data["tables"];
-		};
+		};*/
 		if(isset($data["conditions"])) {
 			$data["conditions"] = $this->wAndInner(1,$data["conditions"]);
 		} else {
