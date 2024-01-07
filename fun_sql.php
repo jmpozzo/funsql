@@ -123,8 +123,12 @@ class db{
 		};
 		return $condiciones_s;
 	}
-	private function innerJoin(){
-		echo "Hola desde el inner Join";
+	private function innerJoin($tables, $inner=null){
+		if(is_array($tables)) {
+			echo "hay muchas tablas";
+		} else {
+			echo "hay solo una tabla";
+		};
 	}
 	private function query($caso, $query){
 		switch ($caso) {
