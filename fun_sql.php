@@ -123,12 +123,26 @@ class db{
 		};
 		return $condiciones_s;
 	}
-	private function innerJoin($tables, $inner=null){
-		if(is_array($tables)) {
-			echo "hay muchas tablas";
-		} else {
-			echo "hay solo una tabla";
+	private function innerJoin($tables, $inner){
+		if(!$inner) {
+			$inner = "INNER";
 		};
+
+		if(is_array($tables)) {
+			switch (true){
+				case (is_array($tables[0])):
+					$tables = " FROM ".$tables[0][0]." ".$tables[1]." JOIN (".str_replace($tables[0][0].", ","",$this->comar(1,$tables[0])).") ";
+					break;
+				case (sizeof($tables)==1):
+					$tables = " FROM ".$tables[0];
+					break;
+				default:
+					$tables = " FROM ".$tables[0]." ".$inner." JOIN (".str_replace($tables[0].", ","",$this->comar(1,$tables)).") ";
+				};
+		} else {
+			$tables = " FROM ".$tables;
+		};
+		return $tables;
 	}
 	private function query($caso, $query){
 		switch ($caso) {
@@ -220,7 +234,10 @@ class db{
 			$data["field"] = $this->comar(1,$data["field"]);
 		};
 		if($data["tables"]){
-			$this->innerJoin();
+			if(!$data["join"]) {
+				$data["join"] = null;
+			};
+			$data["tables"] = $this->innerJoin($data["tables"], $data["join"]);
 		} else {
 			return;
 		};
