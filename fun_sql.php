@@ -416,6 +416,7 @@ class db{
 			return $consulta;
 		};
 		$rtn = $this->query("remove",$consulta);
+		if(!isset($rtn[0])) $rtn = [$rtn];
 		return $rtn;
 	}
 }
