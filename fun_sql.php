@@ -156,7 +156,9 @@ class db{
 					if (sizeof($rtn)<=1) {
 						$rtn = $rtn[0]; 
 					};
+					print_r($rtn);
 					if(!isset($rtn[0])) $rtn = [$rtn];
+					print_r($rtn);
 					return $rtn;
 				} else {
 					return null;
