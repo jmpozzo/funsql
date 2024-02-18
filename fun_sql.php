@@ -392,13 +392,16 @@ class db{
 		if (is_array($data["tables"])) {
 			switch (true) {
 				case (is_array($data["tables"][0])):
+					echo "Desde acá";
 					$data["tables"] = implode(", ", $data["tables"])." FROM ".$data["tables"][0][0].$data["tables"][1]." JOIN (".str_replace($data["tables"][0][0].", ","",$this->comar(1,$data["tables"][0])).") ";
 				break;
 				case (sizeof($data["tables"])>1):
+					echo "Desde allá";
 					$data["tables"] = implode(", ", $data["tables"])." FROM ".$data["tables"][0]." JOIN (".str_replace($data["tables"][0].", ","",$this->comar(1,$data["tables"])).") ";
 				break;
 			};
 		} else {
+			echo "Desde el otro acá";
 			$data["tables"] = " FROM ".$data["tables"];
 		};
 		if(isset($data["conditions"])) {
