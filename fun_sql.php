@@ -156,6 +156,7 @@ class db{
 					if (sizeof($rtn)<=1) {
 						$rtn = $rtn[0]; 
 					};
+					if(!isset($rtn[0])) $rtn = [$rtn];
 					return $rtn;
 				} else {
 					return null;
@@ -416,7 +417,6 @@ class db{
 			return $consulta;
 		};
 		$rtn = $this->query("remove",$consulta);
-		if(!isset($rtn[0])) $rtn = [$rtn];
 		return $rtn;
 	}
 }
