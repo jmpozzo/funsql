@@ -392,10 +392,10 @@ class db{
 		if (is_array($data["tables"])) {
 			switch (true) {
 				case (is_array($data["tables"][0])):
-					$data["tables"] = " FROM ".$data["tables"][0][0]." Del ".$data["tables"][1]." JOIN (".str_replace($data["tables"][0][0].", ","",$this->comar(1,$data["tables"][0])).") ";
+					$data["tables"] = implode(", ", $data["tables"])." FROM ".$data["tables"][0][0].$data["tables"][1]." JOIN (".str_replace($data["tables"][0][0].", ","",$this->comar(1,$data["tables"][0])).") ";
 				break;
 				case (sizeof($data["tables"])>1):
-					$data["tables"] = " FROM ".$data["tables"][0]." INNER JOIN (".str_replace($data["tables"][0].", ","",$this->comar(1,$data["tables"])).") ";
+					$data["tables"] = implode(", ", $data["tables"])." FROM ".$data["tables"][0]." JOIN (".str_replace($data["tables"][0].", ","",$this->comar(1,$data["tables"])).") ";
 				break;
 			};
 		} else {
