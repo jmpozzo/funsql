@@ -411,7 +411,7 @@ class db{
 		} else {
 			$data["foreign"] = null;
 		};
-		$consulta = "DELETE Del".$data["tables"].$data["foreign"]." ".$data["conditions"];
+		$consulta = "DELETE ".$data["tables"].$data["foreign"]." ".$data["conditions"];
 		if ($retQ) {
 			return $consulta;
 		};
