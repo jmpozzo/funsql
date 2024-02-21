@@ -172,7 +172,7 @@ class db{
 			case 'create':
 				$resultado = $this->conection->query($query);
 				if ($resultado === TRUE) {
-					return $this->query("select","SELECT LAST_INSERT_ID() lastId");
+					return $this->query("select","SELECT LAST_INSERT_ID() lastId")[0];
 				} else {
 					return false;
 				};
@@ -317,6 +317,7 @@ class db{
 		$rtn = $this->query("create",$consulta);
 		return  $rtn;
 	}
+	
 	//$retQ => bool, cuando es true, no ejecuta la consulta y la devuelve en formato texto, false ejecuta la consulta
 	//$tablas => si usas una tabla sola, va suelto, pero si son varias, va en un array
 	//$campoVal => Si solo modificas un campo, este lo pones dentro de un array, seguido por el valor (["campo"=>"valor"])
