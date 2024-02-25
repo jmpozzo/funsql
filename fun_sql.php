@@ -308,7 +308,7 @@ class db{
 		};
 		$campos = " (".$this->comar(1,$campos).") ";
 		if (!$tablasInner) {
-			$tablasInner = $tablaInsert;
+			$tablasInner = "DUAL";
 		};
 		$consulta = "INSERT INTO ".$tablaInsert.$campos.$this->select(true,$tablasInner,$valores,$condicional,$foragneos, null, 1);
 		if ($retQ) {
