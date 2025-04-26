@@ -235,7 +235,7 @@ class db{
 			$data["field"] = $this->comar(1,$data["field"]);
 		};
 		if($data["tables"]){
-			if(!array_key_exists("join", $data)) {
+			if(!isset($data["join"])) {
 				$data["join"] = null;
 			};
 			$data["tables"] = $this->innerJoin($data["tables"], $data["join"]);
