@@ -1,0 +1,5 @@
+#Configuración de base de datos
+config.json
+
+#versionado de base de datos
+dataBase.json
