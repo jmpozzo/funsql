@@ -1,0 +1,13 @@
+/*
+{
+ "table_name":
+    "propertys":{
+      "property_name":{
+          property_type:(INT, VARCHAR),
+          property_size: (optional),
+          property_null: (true or false),
+          property_reference: [table, property_name, on_Delete]
+      }
+    }
+}
+*/
