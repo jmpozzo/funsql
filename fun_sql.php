@@ -81,19 +81,6 @@ class db{
 					$campos_s = $campos_s.", ".$campo;
 				};
 			};
-		/*} else {
-			if (is_array($campos)) {
-				if (!$campos[key($campos)]) {
-					$campos[key($campos)] = "NULL";
-				} else if ($metodo == 0 && is_string($campos[key($campos)])) {
-					$campos[key($campos)] = "'".$campos[key($campos)]."'";
-				};
-				if (!is_int(key($campos))) {
-					$campos[0] = key($campos)."=".$campos[key($campos)];
-				};
-				$campos = $campos[0];
-			};
-			$campos_s = $campos;*/
 		};
 		return $campos_s;
 	}
@@ -105,12 +92,12 @@ class db{
 			if (is_array($condiciones[0]) && sizeof($condiciones)>0) {
 				$condiciones = $condiciones[0];
 			};
-			if ($metodo != 0 && is_string($condiciones[2])) {
+			if ($metodo != 0 && (isset($condiciones[2]) && is_string($condiciones[2]))) {
 				if ($condiciones[1] !== "IN" && $condiciones[1] !== "NOT IN") {
 					$condiciones[2] = "'".$condiciones[2]."'";
 				};
 			};
-			$condiciones_s = $condiciones[0]." ".$condiciones[1]." ".$condiciones[2];
+			$condiciones_s = $condiciones[0]." ".$condiciones[1]." ".(isset($condiciones[2]) ? $condiciones[2] : "");
 		};
 		switch ($metodo) {
 			case 0:
@@ -150,14 +137,14 @@ class db{
 				$resultado = $this->conection->query($query);
 				if ($resultado && mysqli_num_rows($resultado)) {
 					$rtn = [];
-					while ($row = $resultado->fetch_assoc()){
-						array_push($rtn,$row);
+					if($resultado->num_rows > 0) {
+						while ($row = $resultado->fetch_assoc()){
+							array_push($rtn,$row);
+						};
+						return $rtn;
+					} else {
+						return null;
 					};
-					if (sizeof($rtn)<=1) {
-						$rtn = $rtn[0]; 
-					};
-					if(!isset($rtn[0])) $rtn = [$rtn];
-					return $rtn;
 				} else {
 					return null;
 				};
@@ -242,18 +229,6 @@ class db{
 		} else {
 			return;
 		};
-		/*if (is_array($data["tables"])) {
-			switch (true) {
-				case (is_array($data["tables"][0])):
-					$data["tables"] = " FROM ".$data["tables"][0][0]." ".$data["tables"][1]." JOIN (".str_replace($data["tables"][0][0].", ","",$this->comar(1,$data["tables"][0])).") ";
-				break;
-				case (sizeof($data["tables"])>1):
-					$data["tables"] = " FROM ".$data["tables"][0]." INNER JOIN (".str_replace($data["tables"][0].", ","",$this->comar(1,$data["tables"])).") ";
-				break;
-			};
-		} else {
-			$data["tables"] = " FROM ".$data["tables"];
-		};*/
 		if(isset($data["conditions"])) {
 			$data["conditions"] = $this->wAndInner(1,$data["conditions"]);
 		} else {
