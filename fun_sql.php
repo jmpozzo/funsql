@@ -37,7 +37,7 @@ class db{
 	private function and($metodo,$ands){
 		$and_s = null;
 		foreach ($ands as $and) {
-			if($metodo != 0 && is_string($and[2])){
+			if($metodo != 0 && (isset($and[2]) && is_string($and[2]))){
 				if ($and[1] !== "IN" && $and[1] !== "NOT IN") {
 					$and[2] = "'".$and[2]."'";
 				};
@@ -53,7 +53,7 @@ class db{
 							break;
 					};
 				};
-				$and_s = $and_s." ".$andor." ".$and[0]." ".$and[1]." ".$and[2];
+				$and_s = $and_s." ".$andor." ".((isset($and[0])) ? $and[0] : "")." ".((isset($and[1])) ? $and[1] : "")." ".((isset($and[2])) ? $and[2] : "");
 			};
 		};
 		return $and_s;
@@ -221,23 +221,32 @@ class db{
 		if (is_array($data["field"])) {
 			$data["field"] = $this->comar(1,$data["field"]);
 		};
-		if($data["tables"]){
-			if(!isset($data["join"])) {
-				$data["join"] = null;
+		if(isset($data["join"]) && is_array($data["join"])){
+			$data["tables"] = $this->innerJoin($data["tables"], null);
+			foreach ($data["join"] as $j_k=>$j_v) {
+				if(!isset($data["foreign"])) $data["foreign"] = [];
+				$data["foreign"][$j_k] = ((isset($j_v[2]))?$j_v[2]:"INNER")." JOIN ".$j_v[0].$this->wAndInner(0,$j_v[1]);
 			};
-			$data["tables"] = $this->innerJoin($data["tables"], $data["join"]);
+			$data["foreign"] =" ".implode(" ", $data["foreign"]);
 		} else {
-			return;
+			if($data["tables"]){
+				if(!isset($data["join"])) {
+					$data["join"] = null;
+				};
+				$data["tables"] = $this->innerJoin($data["tables"], $data["join"]);
+			} else {
+				return;
+			};
+			if(isset($data["foreign"])) {
+				$data["foreign"] = $this->wAndInner(0,$data["foreign"]);
+			} else {
+				$data["foreign"] = null;
+			};
 		};
 		if(isset($data["conditions"])) {
 			$data["conditions"] = $this->wAndInner(1,$data["conditions"]);
 		} else {
 			$data["conditions"] = null;	
-		};
-		if(isset($data["foreign"])) {
-			$data["foreign"] = $this->wAndInner(0,$data["foreign"]);
-		} else {
-			$data["foreign"] = null;
 		};
 		if(isset($data["order"])) {
 			switch ($data["order"][1]) {
