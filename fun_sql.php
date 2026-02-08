@@ -362,6 +362,44 @@ class db{
 		return $rtn;
 	}
 
+	public function nw_update($retQ, $data){
+		$campoVal = $data["field_val"];
+		if (!empty($campoVal["multi"])) {
+			$whenThen = $campoVal["attr"][0]." = CASE ".$campoVal["attr"][1]." ";
+			foreach ($campoVal["values"] as $updateKey => $updateVal) {
+				$whenThen =$whenThen."WHEN ".$updateKey." THEN ".$updateVal." ";
+			};
+			$whenThen = $whenThen." END";
+			$campoVal = $whenThen;
+		} else {
+			$campoVal = $this->comar(1, $campoVal);
+		};
+
+		$tablas = $data["tables"];
+		if (is_array($tablas)) {
+			switch (true) {
+				case (sizeof($tablas)>1):
+					$tablas =$tablas[0]." INNER JOIN (".str_replace($tablas[0].", ","",$this->comar(1,$tablas)).") ";
+				break;
+				case (sizeof($tablas) == 1):
+					$tablas = $tablas[0];
+				break;
+			};
+		};
+
+		$condiciones = $data["conditions"];
+		if($condiciones){
+			$condiciones = $this->wAndInner(1,$condiciones);
+		};
+
+		$consulta = "UPDATE ".$tablas." SET ".$campoVal." ".$condiciones;
+		if($retQ){
+			return $consulta;
+		};
+		$rtn = $this->query("update",$consulta);
+		return $rtn;
+	}
+
 	public function remove($retQ, $tabla, $condiciones = null){
 		if($condiciones){
 			$condiciones = $this->wAndInner(1,$condiciones);
