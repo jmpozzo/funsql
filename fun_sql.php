@@ -472,8 +472,7 @@ class db{
 
 		foreach ($dataBaseFields as $field) {
 			if(!isset($rtn[$field["table_name"]])) $rtn[$field["table_name"]] = [];
-			$rtn[$field["table_name"]] = [
-				"field_name"=>$field["field_name"],
+			$rtn[$field["table_name"]][$field["field_name"]] = [
 				"field_type"=>$field["field_type"],
 				"field_null"=>$field["field_unset"],
 				"field_key"=>$field["key_type"],
