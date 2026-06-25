@@ -12,14 +12,16 @@ class db{
 	public $usr;
 	public $pass;
 	public $dbname;
+	public $fieldInfo;
 
 	private $conection;
 
-	public function __construct($srv, $usr, $pass, $dbname){
+	public function __construct($srv, $usr, $pass, $dbname, $dbfieldsInfo = null){
 		$this->srv = $srv;
 		$this->usr = $usr;
 		$this->pass = $pass;
 		$this->dbname = $dbname;
+		$this->fieldInfo = $dbfieldsInfo;
 	}
 	public function conectar(){
 		$this->conection = new mysqli($this->srv, $this->usr, $this->pass, $this->dbname);
