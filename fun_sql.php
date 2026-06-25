@@ -444,5 +444,46 @@ class db{
 		$rtn = $this->query("remove",$consulta);
 		return $rtn;
 	}
+
+	public function getDataBaseFields(){
+
+		$dataBaseFields = $this->select_nw(false, [
+			"tables"=>["INFORMATION_SCHEMA.COLUMNS c", "INFORMATION_SCHEMA.KEY_COLUMN_USAGE k"],
+			"field"=>[
+				"c.TABLE_NAME table_name",
+				"c.COLUMN_NAME field_name",
+				"c.DATA_TYPE field_type",
+				"c.IS_NULLABLE field_unset",
+				"c.COLUMN_KEY key_type",
+				"k.REFERENCED_TABLE_NAME foreign_table",
+				"k.REFERENCED_COLUMN_NAME foreign_field "
+			],
+			"join"=>"LEFT",
+			"foreign"=>[
+				["c.TABLE_SCHEMA", "=", "k.TABLE_SCHEMA"],
+				["c.TABLE_NAME", "=", "k.TABLE_NAME"],
+				["c.COLUMN_NAME", "=", "k.COLUMN_NAME"]
+			],
+			"conditions"=>["c.TABLE_SCHEMA", "=", $this->dbname],
+			"order"=>["c.TABLE_NAME", true]
+		]);
+
+		$rtn = [];
+
+		foreach ($dataBaseFields as $field) {
+			if(!isset($rtn[$field["table_name"]])) $rtn[$field["table_name"]] = [];
+			$rtn[$field["table_name"]] = [
+				"field_name"=>$field["field_name"],
+				"field_type"=>$field["field_type"],
+				"field_null"=>$field["field_unset"],
+				"field_key"=>$field["key_type"],
+				"foreign_table"=>$field["foreign_table"],
+				"foreign_field"=>$field["foreign_field"]
+			];
+		};
+
+		if(sizeof($rtn) == 0) return false;
+		return $rtn;
+	}
 }
 ?>
