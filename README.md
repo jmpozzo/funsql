@@ -1,32 +1,33 @@
 # FunSQL
 
-Un **Query Builder para PHP y MySQL** extremadamente liviano, orientado a construir consultas SQL utilizando arrays de PHP sin depender de frameworks externos.
+**FunSQL** es un **Query Builder ligero para PHP y MySQL** que permite construir consultas SQL utilizando únicamente arrays de PHP, sin depender de frameworks ni librerías externas.
 
-Su objetivo es simplificar la escritura de consultas complejas manteniendo el control absoluto sobre el SQL generado.
+Su objetivo es simplificar la generación dinámica de consultas SQL manteniendo el control total sobre el código generado.
 
 ---
 
-## Características
+# Características
 
-- ✔ SELECT
-- ✔ INSERT
-- ✔ UPDATE
-- ✔ DELETE
-- ✔ INNER JOIN
-- ✔ LEFT JOIN
-- ✔ GROUP BY
-- ✔ ORDER BY
-- ✔ LIMIT
-- ✔ Actualizaciones múltiples (`CASE WHEN`)
-- ✔ Obtener el SQL generado sin ejecutarlo
-- ✔ Inspección automática de la estructura de la base de datos
-- ✔ Compatible con MySQL mediante `mysqli`
+* ✔ SELECT dinámicos
+* ✔ INSERT
+* ✔ UPDATE
+* ✔ DELETE
+* ✔ INNER JOIN
+* ✔ LEFT JOIN
+* ✔ GROUP BY
+* ✔ ORDER BY
+* ✔ LIMIT
+* ✔ Actualizaciones múltiples mediante `CASE WHEN`
+* ✔ Obtención del SQL generado sin ejecutar la consulta
+* ✔ Inspección automática de la estructura de la base de datos
+* ✔ Compatible con MySQL y MariaDB
+* ✔ Basado únicamente en `mysqli`
 
 ---
 
 # Instalación
 
-Simplemente incluya el archivo.
+Simplemente incluya el archivo dentro de su proyecto.
 
 ```php
 require_once "fun_sql.php";
@@ -49,299 +50,91 @@ $db->conectar();
 
 # Filosofía
 
-En lugar de escribir consultas SQL manualmente:
+La idea principal de FunSQL es representar una consulta SQL como una estructura de datos en PHP.
+
+En lugar de construir cadenas SQL manualmente:
 
 ```sql
-SELECT *
-FROM usuarios
-WHERE id = 5
+SELECT users.id, users.name
+FROM users
+LEFT JOIN roles ON users.role = roles.id
+WHERE users.active = 1
+ORDER BY users.name ASC
+LIMIT 20;
 ```
 
-FunSQL permite construirlas mediante estructuras PHP:
-
-```php
-$db->select(
-    false,
-    "usuarios",
-    "*",
-    ["id","=",5]
-);
-```
-
-Esto hace que las consultas sean más fáciles de generar dinámicamente.
-
----
-
-# SELECT
-
-## Consulta simple
-
-```php
-$resultado = $db->select(
-    false,
-    "usuarios",
-    "*"
-);
-```
-
----
-
-## Seleccionar campos específicos
-
-```php
-$resultado = $db->select(
-    false,
-    "usuarios",
-    [
-        "id",
-        "nombre",
-        "apellido"
-    ]
-);
-```
-
----
-
-## WHERE
-
-```php
-$resultado = $db->select(
-    false,
-    "usuarios",
-    "*",
-    ["id","=",15]
-);
-```
-
----
-
-## Múltiples condiciones
-
-```php
-[
-    ["activo","=",1],
-    ["edad",">",18],
-    ["pais","=","Argentina","OR"]
-]
-```
-
-Genera:
-
-```sql
-WHERE activo = 1
-AND edad > 18
-OR pais = 'Argentina'
-```
-
----
-
-## ORDER BY
-
-```php
-[
-    "nombre",
-    true
-]
-```
-
-Genera:
-
-```sql
-ORDER BY nombre ASC
-```
-
-```php
-[
-    "nombre",
-    false
-]
-```
-
-Genera:
-
-```sql
-ORDER BY nombre DESC
-```
-
----
-
-## LIMIT
-
-```php
-$db->select(
-    false,
-    "usuarios",
-    "*",
-    null,
-    null,
-    null,
-    20
-);
-```
-
----
-
-# JOIN
-
-Puede realizar INNER JOIN o LEFT JOIN utilizando arrays.
-
-Ejemplo:
+la consulta se representa mediante un único array asociativo.
 
 ```php
 $db->select_nw(false,[
-    "tables"=>"usuarios",
-
-    "join"=>[
-        [
-            "roles",
-            ["usuarios.rol","=","roles.id"]
-        ]
-    ],
-
+    "tables"=>"users",
     "field"=>[
-        "usuarios.nombre",
-        "roles.descripcion"
+        "users.id",
+        "users.name"
+    ],
+    "conditions"=>[
+        "users.active",
+        "=",
+        1
     ]
 ]);
 ```
 
-También admite múltiples JOIN.
+Este enfoque permite construir consultas dinámicamente de una forma mucho más sencilla y mantenible.
 
 ---
 
-# INSERT
+# select_nw()
+
+`select_nw()` es el método principal de FunSQL.
+
+Su objetivo es construir consultas `SELECT` utilizando un único array asociativo, donde cada propiedad representa una cláusula SQL.
+
+La firma del método es:
 
 ```php
-$db->create(
-    false,
-    "usuarios",
-    [
-        "nombre"=>"Juan",
-        "edad"=>25
-    ]
-);
+select_nw(bool $returnQuery, array $data)
 ```
 
-Devuelve automáticamente el último ID insertado.
+* **true** → devuelve únicamente el SQL generado.
+* **false** → ejecuta la consulta y devuelve el resultado.
 
 ---
 
-# UPDATE
+# Ejemplo completo
 
 ```php
-$db->update(
-    false,
-    "usuarios",
-    [
-        "nombre"=>"Pedro"
-    ],
-    [
-        "id","=",10
-    ]
-);
-```
+$resultado = $db->select_nw(false,[
 
----
-
-# Actualización múltiple
-
-La librería permite generar automáticamente consultas del tipo:
-
-```sql
-UPDATE tabla
-SET estado =
-CASE id
-WHEN 1 THEN 2
-WHEN 2 THEN 3
-WHEN 3 THEN 5
-END
-```
-
-Utilizando:
-
-```php
-$db->multiUpdate(...)
-```
-
-Ideal para cambios masivos.
-
----
-
-# DELETE
-
-```php
-$db->remove(
-    false,
-    "usuarios",
-    [
-        "id","=",20
-    ]
-);
-```
-
----
-
-# Obtener únicamente el SQL
-
-Todos los métodos poseen como primer parámetro:
-
-```php
-$retQ
-```
-
-Cuando vale `true`, **no ejecuta** la consulta sino que devuelve el SQL generado.
-
-Ejemplo:
-
-```php
-$sql = $db->select(
-    true,
-    "usuarios",
-    "*",
-    ["id","=",5]
-);
-```
-
-Resultado:
-
-```sql
-SELECT *
-FROM usuarios
-WHERE id = 5
-```
-
-Esto resulta muy útil para depuración.
-
----
-
-# Métodos modernos
-
-La librería incorpora una segunda generación de métodos:
-
-- `select_nw()`
-- `nw_update()`
-- `remove_nw()`
-
-Estos utilizan un único array asociativo para definir todos los parámetros de la consulta, facilitando la construcción dinámica de SQL.
-
-Ejemplo:
-
-```php
-$db->select_nw(false,[
-
-    "tables"=>"usuarios",
+    "tables"=>"users",
 
     "field"=>[
-        "id",
-        "nombre"
+        "users.id",
+        "users.name",
+        "roles.description role"
+    ],
+
+    "join"=>[
+        [
+            "roles",
+            [
+                "users.role",
+                "=",
+                "roles.id"
+            ],
+            "LEFT"
+        ]
     ],
 
     "conditions"=>[
-        "activo","=",1
+        ["users.active","=",1],
+        ["roles.visible","=",1]
     ],
 
+    "group"=>"users.id",
+
     "order"=>[
-        "nombre",
+        "users.name",
         true
     ],
 
@@ -350,45 +143,467 @@ $db->select_nw(false,[
 ]);
 ```
 
+SQL generado:
+
+```sql
+SELECT
+    users.id,
+    users.name,
+    roles.description role
+FROM users
+LEFT JOIN roles
+    ON users.role = roles.id
+WHERE users.active = 1
+AND roles.visible = 1
+GROUP BY users.id
+ORDER BY users.name ASC
+LIMIT 20;
+```
+
 ---
 
-# Información de la Base de Datos
+# Estructura del array
 
-La función:
+Cada propiedad representa una cláusula del SQL.
+
+| Propiedad  | Equivalente SQL |
+| ---------- | --------------- |
+| field      | SELECT          |
+| tables     | FROM            |
+| join       | JOIN            |
+| foreign    | ON              |
+| conditions | WHERE           |
+| group      | GROUP BY        |
+| order      | ORDER BY        |
+| limit      | LIMIT           |
+
+---
+
+# field
+
+Define los campos que serán seleccionados.
+
+Puede utilizarse un string:
+
+```php
+"field"=>"*"
+```
+
+o un array:
+
+```php
+"field"=>[
+    "id",
+    "name",
+    "email"
+]
+```
+
+Genera:
+
+```sql
+SELECT id, name, email
+```
+
+---
+
+# tables
+
+Indica la tabla principal.
+
+```php
+"tables"=>"users"
+```
+
+También admite múltiples tablas.
+
+```php
+"tables"=>[
+    "users",
+    "roles"
+]
+```
+
+---
+
+# conditions
+
+Corresponde a la cláusula `WHERE`.
+
+Condición simple:
+
+```php
+"conditions"=>[
+    "id",
+    "=",
+    10
+]
+```
+
+Resultado:
+
+```sql
+WHERE id = 10
+```
+
+Múltiples condiciones:
+
+```php
+"conditions"=>[
+
+    ["active","=",1],
+
+    ["age",">",18],
+
+    ["country","=","Argentina","OR"]
+
+]
+```
+
+Resultado:
+
+```sql
+WHERE active = 1
+AND age > 18
+OR country = 'Argentina'
+```
+
+---
+
+# join
+
+Permite definir uno o varios JOIN.
+
+Cada JOIN posee la siguiente estructura:
+
+```php
+[
+    "tabla",
+    [
+        "campo1",
+        "=",
+        "campo2"
+    ],
+    "TIPO"
+]
+```
+
+Ejemplo:
+
+```php
+"join"=>[
+    [
+        "roles",
+        [
+            "users.role",
+            "=",
+            "roles.id"
+        ]
+    ]
+]
+```
+
+Genera:
+
+```sql
+INNER JOIN roles
+ON users.role = roles.id
+```
+
+Si se especifica un tercer parámetro, se utiliza como tipo de JOIN.
+
+```php
+[
+    "roles",
+    [
+        "users.role",
+        "=",
+        "roles.id"
+    ],
+    "LEFT"
+]
+```
+
+Resultado:
+
+```sql
+LEFT JOIN roles
+ON users.role = roles.id
+```
+
+Puede agregarse cualquier cantidad de JOIN.
+
+---
+
+# foreign
+
+Cuando no se utiliza la propiedad `join`, es posible especificar manualmente la condición `ON`.
+
+```php
+"foreign"=>[
+    "users.role",
+    "=",
+    "roles.id"
+]
+```
+
+Genera:
+
+```sql
+ON users.role = roles.id
+```
+
+---
+
+# group
+
+Permite agregar un `GROUP BY`.
+
+```php
+"group"=>"category"
+```
+
+Resultado:
+
+```sql
+GROUP BY category
+```
+
+---
+
+# order
+
+Define el orden del resultado.
+
+```php
+"order"=>[
+    "name",
+    true
+]
+```
+
+Resultado:
+
+```sql
+ORDER BY name ASC
+```
+
+Mientras que:
+
+```php
+"order"=>[
+    "name",
+    false
+]
+```
+
+produce:
+
+```sql
+ORDER BY name DESC
+```
+
+---
+
+# limit
+
+Limita la cantidad de registros.
+
+```php
+"limit"=>100
+```
+
+Resultado:
+
+```sql
+LIMIT 100
+```
+
+---
+
+# INSERT
+
+Los registros se crean mediante `create()`.
+
+```php
+$db->create(
+
+    false,
+
+    "users",
+
+    [
+
+        "name"=>"John",
+
+        "email"=>"john@mail.com",
+
+        "active"=>1
+
+    ]
+
+);
+```
+
+La función devuelve automáticamente el último ID insertado.
+
+---
+
+# UPDATE
+
+La versión moderna del método es `nw_update()`.
+
+```php
+$db->nw_update(false,[
+
+    "tables"=>"users",
+
+    "field_val"=>[
+        "name"=>"Peter",
+        "active"=>1
+    ],
+
+    "conditions"=>[
+        "id",
+        "=",
+        15
+    ]
+
+]);
+```
+
+Genera:
+
+```sql
+UPDATE users
+SET
+    name='Peter',
+    active=1
+WHERE id = 15;
+```
+
+---
+
+# Actualizaciones múltiples
+
+FunSQL permite generar automáticamente consultas del tipo:
+
+```sql
+UPDATE users
+SET status =
+CASE id
+    WHEN 1 THEN 2
+    WHEN 2 THEN 4
+    WHEN 3 THEN 8
+END;
+```
+
+mediante:
+
+```php
+$db->multiUpdate(...)
+```
+
+Ideal para modificar cientos o miles de registros en una única consulta.
+
+---
+
+# DELETE
+
+La versión moderna es `remove_nw()`.
+
+```php
+$db->remove_nw(false,[
+
+    "tables"=>"users",
+
+    "conditions"=>[
+        "id",
+        "=",
+        20
+    ]
+
+]);
+```
+
+Genera:
+
+```sql
+DELETE
+FROM users
+WHERE id = 20;
+```
+
+---
+
+# Obtener únicamente el SQL
+
+Todos los métodos reciben como primer parámetro un valor booleano.
+
+```php
+true
+```
+
+Devuelve únicamente la consulta SQL.
+
+```php
+$sql = $db->select_nw(true,[
+
+    "tables"=>"users",
+
+    "field"=>"*"
+
+]);
+```
+
+Resultado:
+
+```sql
+SELECT *
+FROM users;
+```
+
+Esto resulta especialmente útil para depuración o para registrar consultas antes de ejecutarlas.
+
+---
+
+# Inspección automática de la Base de Datos
+
+FunSQL incorpora el método:
 
 ```php
 $db->getDataBaseFields();
 ```
 
-consulta automáticamente `INFORMATION_SCHEMA` y devuelve:
+El método consulta automáticamente `INFORMATION_SCHEMA` y devuelve un array con:
 
-- tablas
-- campos
-- tipos
-- claves primarias
-- claves foráneas
-- relaciones
+* Todas las tablas.
+* Todos los campos.
+* Tipo de dato.
+* Claves primarias.
+* Claves foráneas.
+* Relaciones entre tablas.
 
-Ideal para construir aplicaciones dinámicas o generadores de formularios.
+Resulta especialmente útil para construir generadores automáticos de formularios, CRUDs o sistemas de administración.
 
 ---
 
 # Compatibilidad
 
-- PHP 7+
-- PHP 8+
-- MySQL
-- MariaDB
+* PHP 7+
+* PHP 8+
+* MySQL
+* MariaDB
 
 ---
 
 # Dependencias
 
-Únicamente utiliza:
+FunSQL únicamente utiliza la extensión nativa de PHP:
 
-- mysqli
+* `mysqli`
 
-No requiere Composer.
+No requiere Composer ni dependencias externas.
 
 ---
 
