@@ -486,54 +486,118 @@ WHERE id = 15;
 
 # Actualizaciones múltiples
 
-FunSQL permite generar automáticamente consultas del tipo:
+En ocasiones es necesario actualizar una misma columna con valores diferentes para múltiples registros. Normalmente esto implicaría ejecutar una consulta `UPDATE` por cada registro, lo que aumenta el tiempo de ejecución y la cantidad de viajes al servidor.
+
+`multiUpdate()` resuelve este problema generando una única consulta SQL utilizando la estructura `CASE WHEN`.
+
+Por ejemplo, supongamos que deseamos actualizar el estado de varios usuarios:
+
+| ID | Nuevo estado |
+|---:|:-------------|
+| 1 | Activo |
+| 2 | Suspendido |
+| 3 | Eliminado |
+
+En lugar de ejecutar tres consultas independientes:
+
+```sql
+UPDATE users SET status = 'Activo' WHERE id = 1;
+
+UPDATE users SET status = 'Suspendido' WHERE id = 2;
+
+UPDATE users SET status = 'Eliminado' WHERE id = 3;
+```
+
+FunSQL genera automáticamente una única consulta:
 
 ```sql
 UPDATE users
 SET status =
 CASE id
-    WHEN 1 THEN 2
-    WHEN 2 THEN 4
-    WHEN 3 THEN 8
-END;
+    WHEN 1 THEN 'Activo'
+    WHEN 2 THEN 'Suspendido'
+    WHEN 3 THEN 'Eliminado'
+END
+WHERE id IN (1,2,3);
 ```
 
-mediante:
+Esto reduce considerablemente el tiempo de ejecución y la carga sobre el servidor de base de datos.
+
+## Uso
+
+El método recibe una estructura especial en el parámetro `field_val`:
 
 ```php
-$db->multiUpdate(...)
-```
+$db->multiUpdate(false,
 
-Ideal para modificar cientos o miles de registros en una única consulta.
+    "users",
 
----
+    [
 
-# DELETE
+        "multi" => true,
 
-La versión moderna es `remove_nw()`.
+        "attr" => [
 
-```php
-$db->remove_nw(false,[
+            "status",   // Campo que será actualizado
+            "id"        // Campo utilizado para comparar cada registro
 
-    "tables"=>"users",
+        ],
 
-    "conditions"=>[
+        "values" => [
+
+            1 => "'Activo'",
+            2 => "'Suspendido'",
+            3 => "'Eliminado'"
+
+        ]
+
+    ],
+
+    [
+
         "id",
-        "=",
-        20
+        "IN",
+        "(1,2,3)"
+
     ]
 
-]);
+);
 ```
 
-Genera:
+La propiedad `attr` define:
+
+- **Primer valor:** la columna que será modificada.
+- **Segundo valor:** la columna utilizada en cada sentencia `WHEN`.
+
+Mientras que `values` contiene un diccionario donde:
+
+- La **clave** representa el valor evaluado en cada `WHEN`.
+- El **valor** representa el dato que será asignado mediante `THEN`.
+
+En el ejemplo anterior se genera internamente:
 
 ```sql
-DELETE
-FROM users
-WHERE id = 20;
+status = CASE id
+    WHEN 1 THEN 'Activo'
+    WHEN 2 THEN 'Suspendido'
+    WHEN 3 THEN 'Eliminado'
+END
 ```
 
+Posteriormente, dicha expresión se incorpora automáticamente al `UPDATE`.
+
+## ¿Cuándo utilizarlo?
+
+`multiUpdate()` resulta especialmente útil para operaciones masivas como:
+
+- Actualizar prioridades de una lista.
+- Reordenar elementos (drag & drop).
+- Cambiar estados de múltiples registros.
+- Asignar categorías diferentes a varios elementos.
+- Sincronizar información importada desde archivos CSV o Excel.
+- Procesar grandes cantidades de datos minimizando el número de consultas enviadas al servidor.
+
+Para conjuntos de datos medianos o grandes, este enfoque suele ofrecer un rendimiento significativamente mejor que ejecutar un `UPDATE` por cada registro.
 ---
 
 # Obtener únicamente el SQL
