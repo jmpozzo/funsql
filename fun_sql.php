@@ -168,7 +168,7 @@ class db{
 			break;
 			case 'remove':
 				$resultado = $this->conection->query($query);
-				if ($resultado === TRUE) {
+				if ($resultado === TRUE && $this->conection->affected_rows) {
 					return true;
 				} else {
 					return false;
