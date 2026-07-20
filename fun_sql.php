@@ -13,6 +13,7 @@ class db{
 	public $pass;
 	public $dbname;
 	public $fieldInfo;
+	public $error;
 
 	private $conection;
 
@@ -152,17 +153,21 @@ class db{
 				};
 			break;
 			case 'update':
-				$resultado = $this->conection->query($query);
-				if ($resultado === TRUE) {
+				$resultado = 
+				try {
+					$this->conection->query($query);
 					return true;
-				} else {
+				} catch (mysqli_sql_exception $e){
+					$this->error = $e->getMessage();
 					return false;
 				};
+				break;
 			case 'create':
-				$resultado = $this->conection->query($query);
-				if ($resultado === TRUE) {
+				try {
+					$this->conection->query($query);
 					return $this->query("select","SELECT LAST_INSERT_ID() lastId")[0];
-				} else {
+				} catch(mysqli_sql_exception $e){
+					$this->error = $e->getMessage();
 					return false;
 				};
 			break;
