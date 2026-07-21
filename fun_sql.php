@@ -153,7 +153,6 @@ class db{
 				};
 			break;
 			case 'update':
-				$resultado = 
 				try {
 					$this->conection->query($query);
 					return true;
