@@ -137,7 +137,14 @@ class db{
 	private function query($caso, $query){
 		switch ($caso) {
 			case 'select':
-				$resultado = $this->conection->query($query);
+				/* Desde PHP 8.1 mysqli lanza excepciones: un error (tabla o columna inexistente)
+				   devuelve null como siempre, en lugar de cortar la ejecución. El detalle queda en $this->error */
+				try {
+					$resultado = $this->conection->query($query);
+				} catch (mysqli_sql_exception $e){
+					$this->error = $e->getMessage();
+					return null;
+				};
 				if ($resultado && mysqli_num_rows($resultado)) {
 					$rtn = [];
 					if($resultado->num_rows > 0) {
@@ -171,7 +178,12 @@ class db{
 				};
 			break;
 			case 'remove':
-				$resultado = $this->conection->query($query);
+				try {
+					$resultado = $this->conection->query($query);
+				} catch (mysqli_sql_exception $e){
+					$this->error = $e->getMessage();
+					return false;
+				};
 				if ($resultado === TRUE && $this->conection->affected_rows) {
 					return true;
 				} else {
