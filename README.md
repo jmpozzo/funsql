@@ -674,3 +674,47 @@ No requiere Composer ni dependencias externas.
 # Licencia
 
 MIT
+---
+
+# Scripts SQL: `run_script()`
+
+Ejecuta un script SQL completo (por ejemplo, una migración que crea tablas o agrega columnas), sentencia por sentencia.
+
+```php
+$resultado = $db->run_script(false, file_get_contents("migracion.sql"), [1050, 1060, 1061, 1091]);
+```
+
+- **Primer parámetro (`$retQ`)**: con `true` no ejecuta nada y devuelve el array de sentencias que se ejecutarían.
+- **Segundo parámetro**: el texto del script. Se separa por `;` respetando comillas (`'...'`, `"..."`, `` `...` ``) y quitando comentarios (`-- ...`, `# ...`, `/* ... */`).
+- **Tercer parámetro (opcional)**: códigos de error de MySQL que se consideran "ya aplicado" y no cortan la ejecución. Útil para que volver a correr una migración no falle:
+
+| Código | Significado |
+|---|---|
+| 1050 | La tabla ya existe |
+| 1060 | La columna ya existe |
+| 1061 | El índice ya existe |
+| 1091 | No existe la columna/índice que se quiere borrar |
+
+Devuelve:
+
+```php
+[
+    "status" => true,                // false si alguna sentencia falló (no ignorada)
+    "statements" => [
+        ["sql" => "ALTER TABLE ...", "status" => true, "skipped" => false, "errno" => 0, "error" => null],
+        ["sql" => "CREATE TABLE ...", "status" => true, "skipped" => true, "errno" => 1050, "error" => "Table 'x' already exists"]
+    ]
+]
+```
+
+La ejecución se detiene en el primer error no ignorado. Ojo: en MySQL las sentencias de estructura (`ALTER`, `CREATE`, `DROP`) se confirman solas y no se pueden deshacer con una transacción.
+
+`split_script($sql)` está disponible por separado si solo se necesita separar las sentencias.
+
+# Escapar valores: `escape()`
+
+```php
+$nombre = $db->escape($_POST["nombre"]);   // usa mysqli::real_escape_string
+```
+
+Devuelve el valor listo para ir entre comillas en una consulta. Recomendado para cualquier texto que venga del usuario.

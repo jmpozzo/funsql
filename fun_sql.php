@@ -488,5 +488,88 @@ class db{
 		if(sizeof($rtn) == 0) return false;
 		return $rtn;
 	}
+
+	/* ------------------------------------------------------------
+	 * SCRIPTS SQL (estructura, migraciones)
+	 * ------------------------------------------------------------ */
+
+	/* Separa un script en sentencias. Respeta comillas ('...', "...", `...`)
+	   y quita comentarios (-- ..., # ..., /* ... *\/). */
+	public function split_script($sql){
+		$statements = [];
+		$current = "";
+		$length = strlen($sql);
+		$quote = null;
+		for ($i = 0; $i < $length; $i++) {
+			$char = $sql[$i];
+			$next = ($i + 1 < $length) ? $sql[$i + 1] : "";
+			if ($quote !== null) {
+				$current .= $char;
+				if ($char === "\\" && $quote !== "`" && $next !== "") { $current .= $next; $i++; continue; };
+				if ($char === $quote) $quote = null;
+				continue;
+			};
+			if ($char === "'" || $char === '"' || $char === "`") { $quote = $char; $current .= $char; continue; };
+			if (($char === "-" && $next === "-") || $char === "#") {
+				while ($i < $length && $sql[$i] !== "\n") $i++;
+				$current .= "\n";
+				continue;
+			};
+			if ($char === "/" && $next === "*") {
+				$end = strpos($sql, "*/", $i + 2);
+				$i = ($end === false) ? $length : $end + 1;
+				$current .= " ";
+				continue;
+			};
+			if ($char === ";") {
+				if (trim($current) !== "") $statements[] = trim($current);
+				$current = "";
+				continue;
+			};
+			$current .= $char;
+		};
+		if (trim($current) !== "") $statements[] = trim($current);
+		return $statements;
+	}
+
+	/* Ejecuta un script SQL sentencia por sentencia.
+	   $ignore: códigos de error de MySQL que se toman como "ya aplicado"
+	   (ej. 1060 columna duplicada, 1050 tabla existente, 1061 índice duplicado,
+	   1091 no existe lo que se quiere borrar).
+	   Devuelve ["status"=>bool, "statements"=>[["sql","status","skipped","errno","error"], ...]].
+	   Se detiene en el primer error no ignorado. Con $retQ = true solo devuelve las sentencias. */
+	public function run_script($retQ, $sql, $ignore = []){
+		$statements = $this->split_script($sql);
+		if ($retQ) return $statements;
+
+		$rtn = ["status"=>true, "statements"=>[]];
+		foreach ($statements as $statement) {
+			$item = ["sql"=>$statement, "status"=>true, "skipped"=>false, "errno"=>0, "error"=>null];
+			try {
+				$result = $this->conection->query($statement);
+				if ($result === false) throw new mysqli_sql_exception($this->conection->error, $this->conection->errno);
+				if ($result instanceof mysqli_result) $result->free();
+			} catch (mysqli_sql_exception $e) {
+				$item["errno"] = (int)$e->getCode();
+				$item["error"] = $e->getMessage();
+				if (in_array($item["errno"], $ignore, true)) {
+					$item["skipped"] = true;
+				} else {
+					$item["status"] = false;
+					$rtn["status"] = false;
+					$this->error = $item["error"];
+				};
+			};
+			$rtn["statements"][] = $item;
+			if (!$item["status"]) break;
+		};
+		return $rtn;
+	}
+
+	/* Escapa un valor para usarlo dentro de comillas en una consulta */
+	public function escape($value){
+		if ($value === null) return null;
+		return $this->conection->real_escape_string((string)$value);
+	}
 }
 ?>
